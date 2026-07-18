@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="cs" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="description" content="Kalendář docházky do gymu. Žádný výkon, žádný gains — jediná otázka: dokopal ses tam?" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="Drž tempo" />
+<meta name="theme-color" content="#1B1220" id="metaTheme" />
+<link rel="manifest" href="manifest.webmanifest" />
+<meta name="application-name" content="Drž tempo" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
+<title>Drž tempo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;0,6..96,600;1,6..96,500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ===== THEMES ===== */
+  :root, [data-theme="dark"]{
+    --bg:#1B1220; --glow:#2A1B31; --panel:#271A2C; --panel-2:#221627; --field:#1C1220; --line:#3B2A41;
+    --text:#F2E9DC; --muted:#B39FB3;
+    --accent:#E4B75A; --accent-bright:#F4D488; --accent-deep:#A97F2C; --on-accent:#3A2510;
+    --today:#DD8FA8;
+    --shadow:0 18px 40px -18px rgba(0,0,0,.75);
+  }
+  [data-theme="light"]{
+    --bg:#F6F1E9; --glow:#FFFFFF; --panel:#FFFFFF; --panel-2:#FBF6EE; --field:#F1EADC; --line:#E5DBCB;
+    --text:#2E2430; --muted:#8A7E86;
+    --accent:#B98A2E; --accent-bright:#D8A94A; --accent-deep:#8A6420; --on-accent:#3A2510;
+    --today:#C46B86;
+    --shadow:0 16px 34px -20px rgba(70,50,40,.30);
+  }
+  [data-theme="red"]{
+    --bg:#FBEEEC; --glow:#FFF7F5; --panel:#FFFFFF; --panel-2:#FDF3F1; --field:#FBEAE7; --line:#F1DAD5;
+    --text:#4A2E2C; --muted:#AC8B86;
+    --accent:#E8927C; --accent-bright:#F3B4A3; --accent-deep:#C96A54; --on-accent:#57231A;
+    --today:#C15370;
+    --shadow:0 16px 34px -20px rgba(120,60,50,.26);
+  }
+  [data-theme="yellow"]{
+    --bg:#FBF6E6; --glow:#FFFDF3; --panel:#FFFFFF; --panel-2:#FCF8EA; --field:#F8F1DD; --line:#EEE3C5;
+    --text:#463F28; --muted:#A89B78;
+    --accent:#E6B84E; --accent-bright:#F3D477; --accent-deep:#B98F2C; --on-accent:#4A3712;
+    --today:#CC784C;
+    --shadow:0 16px 34px -20px rgba(120,95,40,.24);
+  }
+  [data-theme="blue"]{
+    --bg:#EBF1F8; --glow:#F7FBFF; --panel:#FFFFFF; --panel-2:#F1F6FC; --field:#E7EFF8; --line:#D6E1EE;
+    --text:#26313F; --muted:#7E8B9C;
+    --accent:#7BA7D9; --accent-bright:#A9C8E9; --accent-deep:#4E7CB0; --on-accent:#17293D;
+    --today:#E0876A;
+    --shadow:0 16px 34px -20px rgba(40,70,110,.24);
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:radial-gradient(120% 80% at 50% -10%, var(--glow) 0%, var(--bg) 55%), var(--bg);
+    color:var(--text); font-family:"Space Grotesk", system-ui, sans-serif;
+    min-height:100dvh; -webkit-font-smoothing:antialiased;
+    padding:22px 16px calc(40px + env(safe-area-inset-bottom));
+    transition:background .35s ease, color .35s ease;
+  }
+  .wrap{max-width:460px;margin:0 auto;}
+
+  /* ===== settings ===== */
+  .gear{
+    position:fixed; top:calc(14px + env(safe-area-inset-top)); right:14px; z-index:40;
+    width:42px;height:42px;border-radius:50%;cursor:pointer;padding:0;
+    background:conic-gradient(from 210deg, #E4B75A, #E8927C, #E6B84E, #7BA7D9, #B98A2E, #E4B75A);
+    border:3px solid var(--panel); box-shadow:var(--shadow), 0 0 0 1px var(--line);
+    transition:transform .15s;
+  }
+  .gear:hover{transform:rotate(20deg) scale(1.05);}
+  .gear:focus-visible{outline:2px solid var(--accent);outline-offset:3px;}
+  .theme-pop{
+    position:fixed; top:calc(64px + env(safe-area-inset-top)); right:14px; z-index:39;
+    width:216px; background:var(--panel); border:1px solid var(--line);
+    border-radius:16px; padding:8px; box-shadow:var(--shadow);
+  }
+  .theme-pop[hidden]{display:none;}
+  .theme-pop .h{font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);padding:6px 8px 8px;}
+  .theme-opt{
+    display:flex;align-items:center;gap:11px;width:100%;background:transparent;border:none;
+    border-radius:10px;padding:9px 8px;cursor:pointer;color:var(--text);
+    font-family:"Space Grotesk",sans-serif;font-size:13.5px;text-align:left;
+  }
+  .theme-opt:hover{background:color-mix(in srgb, var(--accent) 12%, transparent);}
+  .theme-opt .sw{width:24px;height:24px;border-radius:50%;flex:none;display:grid;place-items:center;border:1px solid var(--line);}
+  .theme-opt .sw i{width:9px;height:9px;border-radius:50%;display:block;}
+  .theme-opt .tname{flex:1;}
+  .theme-opt .chk{color:var(--accent);font-weight:700;opacity:0;font-size:14px;}
+  .theme-opt.sel .chk{opacity:1;}
+  .theme-opt.sel .sw{box-shadow:0 0 0 2px var(--accent);}
+
+  /* ===== header ===== */
+  .eyebrow{font-size:11px;letter-spacing:.32em;text-transform:uppercase;color:var(--accent);opacity:.9;margin:0 0 6px;font-weight:600;padding-right:52px;}
+  h1{font-family:"Bodoni Moda", Georgia, serif;font-weight:500;font-size:44px;line-height:.95;margin:0;letter-spacing:-.01em;}
+  h1 em{font-style:italic;color:var(--accent);}
+  .lede{color:var(--muted);font-size:13.5px;margin:10px 0 0;line-height:1.5;max-width:34ch;}
+
+  .stats{display:grid;grid-template-columns:1.15fr 1fr;gap:10px;margin:22px 0 8px;}
+  .stat{background:linear-gradient(160deg, var(--panel) 0%, var(--panel-2) 100%);border:1px solid var(--line);border-radius:16px;padding:15px 16px;box-shadow:var(--shadow);position:relative;overflow:hidden;}
+  .stat.hero{border-color:color-mix(in srgb, var(--accent) 35%, var(--line));}
+  .stat.hero::after{content:"";position:absolute;right:-30px;top:-30px;width:110px;height:110px;background:radial-gradient(circle, color-mix(in srgb, var(--accent) 22%, transparent), transparent 70%);}
+  .stat .k{font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin:0 0 4px;}
+  .stat .v{font-family:"Bodoni Moda",serif;font-weight:600;font-size:40px;line-height:1;}
+  .stat.hero .v{color:var(--accent);}
+  .stat .u{font-size:12px;color:var(--muted);margin-top:3px;}
+  .pep{font-size:13px;color:var(--text);opacity:.9;margin:2px 2px 0;min-height:18px;font-style:italic;font-family:"Bodoni Moda",serif;}
+
+  .cal{background:linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%);border:1px solid var(--line);border-radius:20px;padding:16px 14px 18px;margin-top:16px;box-shadow:var(--shadow);}
+  .cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+  .month{font-family:"Bodoni Moda",serif;font-size:21px;font-weight:500;}
+  .month small{display:block;font-family:"Space Grotesk",sans-serif;font-size:11px;color:var(--muted);letter-spacing:.04em;margin-top:1px;}
+  .nav{display:flex;gap:6px;}
+  .nav button{width:34px;height:34px;border-radius:10px;border:1px solid var(--line);background:transparent;color:var(--text);font-size:16px;cursor:pointer;display:grid;place-items:center;transition:background .15s,border-color .15s;}
+  .nav button:hover{background:color-mix(in srgb, var(--accent) 12%, transparent);border-color:var(--accent-deep);}
+  .nav button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+
+  .dow{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:6px;}
+  .dow span{text-align:center;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:2px 0;}
+  .dow span.beat{color:var(--accent);font-weight:600;}
+
+  .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
+  .day{position:relative;aspect-ratio:1/1;border-radius:12px;border:1px solid transparent;background:transparent;color:var(--text);font-size:14px;font-weight:500;cursor:pointer;display:grid;place-items:center;transition:transform .12s,background .15s,border-color .15s;-webkit-tap-highlight-color:transparent;}
+  .day.pad{cursor:default;opacity:0;pointer-events:none;}
+  .day.out{color:var(--muted);opacity:.4;}
+  .day .n{position:relative;z-index:2;}
+  .day.sched{border-color:color-mix(in srgb, var(--accent) 45%, transparent);background:color-mix(in srgb, var(--accent) 7%, transparent);}
+  .day.sched .n{color:var(--accent-deep);}
+  .day.today{box-shadow:inset 0 0 0 1.5px var(--today);}
+  .day.today .n{color:var(--today);}
+  .day.done{background:radial-gradient(120% 120% at 30% 20%, var(--accent-bright) 0%, var(--accent) 45%, var(--accent-deep) 100%);border-color:var(--accent-bright);}
+  .day.done .n{color:var(--on-accent);font-weight:700;}
+  .day.done::before{content:"";position:absolute;inset:0;z-index:1;border-radius:12px;box-shadow:0 6px 16px -6px color-mix(in srgb, var(--accent) 60%, transparent);}
+  .day.done.bonus{background:radial-gradient(120% 120% at 30% 20%, color-mix(in srgb, var(--accent-bright) 65%, #fff) 0%, var(--accent) 55%, var(--accent-deep) 100%);}
+  .day.done.bonus::after{content:"+";position:absolute;top:3px;right:6px;font-size:10px;font-weight:700;color:var(--on-accent);z-index:3;opacity:.85;}
+  .day:hover:not(.pad):not(.done){background:color-mix(in srgb, var(--accent) 13%, transparent);}
+  .day:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+  .day:active:not(.pad){transform:scale(.9);}
+  @keyframes bloom{0%{transform:scale(.55);}60%{transform:scale(1.12);}100%{transform:scale(1);}}
+  .day.pop{animation:bloom .34s cubic-bezier(.2,.9,.3,1.4);}
+
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:14px;padding-top:12px;border-top:1px solid var(--line);}
+  .legend span{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--muted);}
+  .dot{width:13px;height:13px;border-radius:5px;flex:none;}
+  .dot.d1{border:1px solid color-mix(in srgb, var(--accent) 50%, transparent);background:color-mix(in srgb, var(--accent) 8%, transparent);}
+  .dot.d2{background:linear-gradient(160deg,var(--accent-bright),var(--accent-deep));}
+  .dot.d3{box-shadow:inset 0 0 0 1.5px var(--today);}
+
+  .plan{background:linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%);border:1px solid var(--line);border-radius:20px;padding:18px 18px 6px;margin-top:16px;box-shadow:var(--shadow);}
+  .plan-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;}
+  .plan h2{font-family:"Bodoni Moda",serif;font-weight:500;font-size:22px;margin:0 0 2px;}
+  .edit-btn{background:transparent;border:1px solid var(--line);color:var(--accent);border-radius:9px;padding:6px 13px;font-size:12px;font-weight:600;cursor:pointer;font-family:"Space Grotesk",sans-serif;flex:none;transition:background .15s;}
+  .edit-btn:hover{background:color-mix(in srgb, var(--accent) 10%, transparent);}
+  .edit-btn.done-btn{background:var(--accent);color:var(--on-accent);border-color:var(--accent);}
+  .sub{color:var(--muted);font-size:12px;margin:0 0 14px;}
+
+  .move{display:flex;align-items:baseline;gap:12px;padding:11px 0;border-top:1px solid var(--line);}
+  .move:first-of-type{border-top:none;}
+  .move .idx{font-family:"Bodoni Moda",serif;font-size:15px;color:var(--accent);width:22px;flex:none;font-style:italic;}
+  .move .mbody{flex:1;}
+  .move .name{font-size:14.5px;font-weight:500;}
+  .move .hint{font-size:12px;color:var(--muted);margin-top:2px;line-height:1.4;}
+  .move .rep{font-family:"Space Grotesk",sans-serif;font-size:13px;font-weight:600;color:var(--accent-deep);white-space:nowrap;flex:none;}
+
+  .foot{margin:12px -18px 0;padding:12px 18px 16px;border-top:1px solid var(--line);font-size:12px;color:var(--muted);line-height:1.5;}
+  .foot b{color:var(--text);font-weight:600;}
+
+  .field{background:var(--field);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:9px 10px;font-family:inherit;font-size:14px;width:100%;}
+  .field:focus{outline:none;border-color:var(--accent-deep);}
+  .field::placeholder{color:color-mix(in srgb, var(--muted) 75%, transparent);}
+  .sub-input{margin-bottom:14px;font-size:12px;}
+  .edit-move{background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px;}
+  .edit-top{display:flex;gap:8px;}
+  .in-name{flex:1;} .in-rep{width:92px;flex:none;text-align:center;}
+  .in-hint{margin-top:8px;resize:vertical;min-height:38px;line-height:1.35;}
+  .edit-actions{display:flex;gap:6px;margin-top:8px;align-items:center;}
+  .mini{width:34px;height:32px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--text);cursor:pointer;font-size:15px;}
+  .mini:hover{background:color-mix(in srgb, var(--accent) 10%, transparent);border-color:var(--accent-deep);}
+  .mini:disabled{opacity:.3;cursor:default;}
+  .del{margin-left:auto;color:var(--today);border:1px solid color-mix(in srgb, var(--today) 45%, transparent);background:transparent;border-radius:8px;padding:6px 13px;font-size:12px;font-weight:600;cursor:pointer;font-family:"Space Grotesk",sans-serif;}
+  .del:hover{background:color-mix(in srgb, var(--today) 12%, transparent);}
+  .add-move{width:100%;border:1px dashed var(--accent-deep);background:color-mix(in srgb, var(--accent) 6%, transparent);color:var(--accent);border-radius:12px;padding:13px;font-size:13px;font-weight:600;cursor:pointer;font-family:"Space Grotesk",sans-serif;margin:2px 0 4px;}
+  .add-move:hover{background:color-mix(in srgb, var(--accent) 13%, transparent);}
+
+  .tools{display:flex;justify-content:center;align-items:center;gap:10px;margin:22px auto 0;flex-wrap:wrap;}
+  .tool{background:none;border:none;color:var(--muted);font-size:11.5px;letter-spacing:.05em;cursor:pointer;opacity:.65;font-family:"Space Grotesk",sans-serif;padding:4px 2px;}
+  .tool:hover{opacity:1;color:var(--accent);}
+  .tool.danger:hover{color:var(--today);}
+  .tool:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px;opacity:1;}
+  .tool-sep{color:var(--muted);opacity:.4;font-size:11px;}
+  .day:disabled{cursor:default;pointer-events:none;}
+
+  @media (prefers-reduced-motion: reduce){.day.pop{animation:none;}.day,.gear,body{transition:none;}}
+</style>
+</head>
+<body>
+  <button class="gear" id="gear" aria-label="Nastavení tématu" aria-haspopup="true" aria-expanded="false"></button>
+  <div class="theme-pop" id="themePop" hidden role="menu" aria-label="Barevné téma"></div>
+
+  <div class="wrap">
+    <header>
+      <p class="eyebrow">Madeira · Ne · Út · Čt</p>
+      <h1>Drž <em>tempo</em></h1>
+      <p class="lede">Žádný výkon, žádný gains. Jediná otázka: dokopal ses tam? Trefíš beat — orazítkuješ si den.</p>
+    </header>
+
+    <section class="stats">
+      <div class="stat hero"><p class="k">Tempo</p><div class="v" id="streak">0</div><p class="u" id="streakU">tréninků v řadě</p></div>
+      <div class="stat"><p class="k">Celkem</p><div class="v" id="total">0</div><p class="u">ukázání</p></div>
+    </section>
+    <p class="pep" id="pep">Začínáme. Stačí přijít.</p>
+
+    <section class="cal" aria-label="Kalendář docházky">
+      <div class="cal-head">
+        <div class="month" id="monthLbl">—<small id="monthCount"></small></div>
+        <div class="nav">
+          <button id="prev" aria-label="Předchozí měsíc">‹</button>
+          <button id="jump" aria-label="Skočit na dnešek">•</button>
+          <button id="next" aria-label="Další měsíc">›</button>
+        </div>
+      </div>
+      <div class="dow" id="dow"></div>
+      <div class="grid" id="grid"></div>
+      <div class="legend">
+        <span><i class="dot d1"></i>plánovaný den</span>
+        <span><i class="dot d2"></i>byl jsem</span>
+        <span><i class="dot d3"></i>dnes</span>
+      </div>
+    </section>
+
+    <section class="plan" id="plan"></section>
+
+    <div class="tools">
+      <button class="tool" id="exportBtn">zálohovat data</button>
+      <span class="tool-sep" aria-hidden="true">·</span>
+      <button class="tool" id="importBtn">obnovit zálohu</button>
+      <span class="tool-sep" aria-hidden="true">·</span>
+      <button class="tool danger" id="reset">vymazat razítka</button>
+      <input type="file" id="importFile" accept="application/json,.json" hidden />
+    </div>
+  </div>
+
+<script>
+(function(){
+  "use strict";
+
+  const mem={};
+  const store={
+    get(k){ try{ return localStorage.getItem(k); }catch(e){ return (k in mem)?mem[k]:null; } },
+    set(k,v){ try{ localStorage.setItem(k,v); }catch(e){ mem[k]=v; } }
+  };
+  const K_ATT="tempo:attended:v1", K_MOVES="tempo:moves:v1", K_SUB="tempo:sub:v1", K_THEME="tempo:theme:v1";
+
+  const THEMES=[
+    {id:"dark",   name:"Parket (tmavé)", bg:"#1B1220", accent:"#E4B75A"},
+    {id:"light",  name:"Sál (světlé)",   bg:"#F6F1E9", accent:"#B98A2E"},
+    {id:"red",    name:"Pastelová červená", bg:"#FBEEEC", accent:"#E8927C"},
+    {id:"yellow", name:"Pastelová žlutá",   bg:"#FBF6E6", accent:"#E6B84E"},
+    {id:"blue",   name:"Pastelová modrá",   bg:"#EBF1F8", accent:"#7BA7D9"}
+  ];
+
+  const DEFAULT_MOVES=[
+    {name:"Rozehřátí", rep:"5 min", hint:"Rozhýbat se, roztančit. Tohle umíš líp než já."},
+    {name:"Dřep s vlastní vahou", rep:"10–15×", hint:"Paty na zemi, koleno směr špička."},
+    {name:"Klik", rep:"5–10×", hint:"Start o zeď nebo z kolen → časem plný."},
+    {name:"Přítah / TRX", rep:"5–10×", hint:"Záda. Nepřeskakovat, jinak budeš nevyvážený."},
+    {name:"Glute bridge", rep:"12–15×", hint:"Zvednout boky, nahoře stisknout hýždě."},
+    {name:"Hollow / plank", rep:"20–30 s", hint:"Core. Hollow body ti bude povědomý z tance."}
+  ];
+  const DEFAULT_SUB="~25 min · 2–3 kola okruhu";
+
+  const MONTHS=["Leden","Únor","Březen","Duben","Květen","Červen","Červenec","Srpen","Září","Říjen","Listopad","Prosinec"];
+  const MONTHS_GEN=["ledna","února","března","dubna","května","června","července","srpna","září","října","listopadu","prosince"];
+  const DOW=["Po","Út","St","Čt","Pá","So","Ne"];
+  const BEAT_COLS=[1,3,6];
+
+  let attended=new Set(), moves=[], sub=DEFAULT_SUB, theme="dark", editing=false;
+  let view=new Date(); view.setDate(1);
+
+  const $=id=>document.getElementById(id);
+  const pad=n=>String(n).padStart(2,"0");
+  const keyOf=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  const isScheduled=d=>[0,2,4].includes(d.getDay());
+  const startOfToday=()=>{const t=new Date();t.setHours(0,0,0,0);return t;};
+  const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x;};
+  const sameDay=(a,b)=>a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();
+
+  function h(tag,attrs){
+    const e=document.createElement(tag); attrs=attrs||{};
+    for(const k in attrs){ const v=attrs[k];
+      if(k==="class") e.className=v; else if(k==="text") e.textContent=v;
+      else if(k==="value") e.value=v; else if(k.slice(0,2)==="on") e.addEventListener(k.slice(2).toLowerCase(),v);
+      else if(v!==false&&v!=null) e.setAttribute(k,v);
+    }
+    for(let i=2;i<arguments.length;i++){ const c=arguments[i]; if(c==null) continue;
+      e.appendChild(typeof c==="string"?document.createTextNode(c):c); }
+    return e;
+  }
+
+  function load(){
+    try{ const a=store.get(K_ATT); if(a) attended=new Set(JSON.parse(a)); }catch(e){}
+    try{ const m=store.get(K_MOVES); moves=m?JSON.parse(m):DEFAULT_MOVES.slice(); }catch(e){ moves=DEFAULT_MOVES.slice(); }
+    if(!Array.isArray(moves)||!moves.length) moves=DEFAULT_MOVES.slice();
+    const s=store.get(K_SUB); sub=(s!=null)?s:DEFAULT_SUB;
+    const t=store.get(K_THEME);
+    if(t&&THEMES.some(x=>x.id===t)) theme=t;
+    else theme=(window.matchMedia&&matchMedia("(prefers-color-scheme: light)").matches)?"light":"dark";
+  }
+  const saveAtt =()=>store.set(K_ATT, JSON.stringify([...attended]));
+  const saveMoves=()=>store.set(K_MOVES, JSON.stringify(moves));
+  const saveSub =()=>store.set(K_SUB, sub);
+  const saveTheme=()=>store.set(K_THEME, theme);
+
+  function tempo(){
+    const today=startOfToday(); let count=0;
+    for(let i=0;i<400;i++){ const d=addDays(today,-i);
+      if(!isScheduled(d)) continue;
+      const done=attended.has(keyOf(d));
+      if(sameDay(d,today)&&!done) continue;
+      if(done) count++; else break;
+    }
+    return count;
+  }
+  function monthTotal(){ let c=0; for(const k of attended){ const [y,m]=k.split("-").map(Number); if(y===view.getFullYear()&&m===view.getMonth()+1) c++; } return c; }
+  const PEP=["Začínáme. Stačí přijít.","První beat sedí. 🎯","Dva za sebou — chytáš rytmus.","Tři v řadě. Tohle už je návyk, ne náhoda.","Čtyři. Tělo si zvyká.","Pět v tempu. Slušný.","Šest za sebou — jedeš jak hodinky."];
+  const pepFor=n=> n<=0?PEP[0]:(n<PEP.length?PEP[n]:`${n} v řadě. Tanečník se vrátil na parket. 💃`);
+
+  /* ===== theme ===== */
+  function applyTheme(id){
+    theme=id; document.documentElement.setAttribute("data-theme",id);
+    const t=THEMES.find(x=>x.id===id); if(t){ const meta=$("metaTheme"); if(meta) meta.setAttribute("content",t.bg); }
+    saveTheme(); renderThemeOpts();
+  }
+  function renderThemeOpts(){
+    const pop=$("themePop"); pop.innerHTML="";
+    pop.appendChild(h("div",{class:"h",text:"Barevné téma"}));
+    THEMES.forEach(t=>{
+      const sw=h("span",{class:"sw"}, h("i",{})); sw.style.background=t.bg; sw.firstChild.style.background=t.accent;
+      pop.appendChild(h("button",{class:"theme-opt"+(t.id===theme?" sel":""),role:"menuitem",
+        onClick:()=>{ applyTheme(t.id); closePop(); }},
+        sw, h("span",{class:"tname",text:t.name}), h("span",{class:"chk",text:"✓"})
+      ));
+    });
+  }
+  function openPop(){ $("themePop").hidden=false; $("gear").setAttribute("aria-expanded","true"); }
+  function closePop(){ $("themePop").hidden=true; $("gear").setAttribute("aria-expanded","false"); }
+
+  /* ===== calendar ===== */
+  function renderDow(){ const el=$("dow"); el.innerHTML=""; DOW.forEach((d,i)=>{ const s=document.createElement("span"); s.textContent=d; if(BEAT_COLS.includes(i)) s.className="beat"; el.appendChild(s); }); }
+  function renderCal(){
+    const y=view.getFullYear(), m=view.getMonth();
+    $("monthLbl").firstChild.textContent=`${MONTHS[m]} ${y}`;
+    const now=new Date(), curMonth=y===now.getFullYear()&&m===now.getMonth();
+    const mc=monthTotal(); $("monthCount").textContent=mc?`${mc}× ${curMonth?"tento měsíc":"za měsíc"}`:(curMonth?"zatím nic tento měsíc":"žádné razítko");
+    const t=tempo();
+    $("streak").textContent=t; $("streakU").textContent=t===1?"trénink v řadě":(t>=2&&t<=4?"tréninky v řadě":"tréninků v řadě");
+    $("total").textContent=attended.size; $("pep").textContent=pepFor(t);
+    const grid=$("grid"); grid.innerHTML="";
+    const first=new Date(y,m,1); const offset=(first.getDay()+6)%7; const dim=new Date(y,m+1,0).getDate();
+    const today=startOfToday();
+    for(let i=0;i<offset;i++){ const c=document.createElement("div"); c.className="day pad"; grid.appendChild(c); }
+    for(let day=1;day<=dim;day++){
+      const d=new Date(y,m,day), k=keyOf(d);
+      const btn=document.createElement("button"); btn.className="day"; btn.innerHTML=`<span class="n">${day}</span>`;
+      const done=attended.has(k), sched=isScheduled(d);
+      if(done){ btn.classList.add("done"); if(!sched) btn.classList.add("bonus"); } else if(sched){ btn.classList.add("sched"); }
+      if(sameDay(d,today)) btn.classList.add("today");
+      if(d>today&&!done){ btn.classList.add("out"); btn.disabled=true; }
+      btn.setAttribute("aria-pressed",done?"true":"false");
+      btn.setAttribute("aria-label",`${day}. ${MONTHS_GEN[m]} ${y}${done?" – orazítkováno":""}`);
+      btn.addEventListener("click",()=>{
+        if(attended.has(k)){ attended.delete(k); }
+        else{ attended.add(k); btn.classList.add("pop"); setTimeout(()=>btn.classList.remove("pop"),360); }
+        saveAtt(); renderCal();
+      });
+      grid.appendChild(btn);
+    }
+  }
+
+  /* ===== plan ===== */
+  function renderPlan(){
+    const p=$("plan"); p.innerHTML="";
+    p.appendChild(h("div",{class:"plan-head"},
+      h("div",{}, h("h2",{text:"Dnešní choreografie"}), editing?null:h("p",{class:"sub",text:sub})),
+      h("button",{class:"edit-btn"+(editing?" done-btn":""),text:editing?"Hotovo":"Upravit",onClick:()=>{editing=!editing;renderPlan();}})
+    ));
+    if(!editing){
+      moves.forEach((mv,i)=>{
+        p.appendChild(h("div",{class:"move"},
+          h("div",{class:"idx",text:String(i+1)}),
+          h("div",{class:"mbody"}, h("div",{class:"name",text:mv.name||"—"}), mv.hint?h("div",{class:"hint",text:mv.hint}):null),
+          h("div",{class:"rep",text:mv.rep||""})
+        ));
+      });
+      p.appendChild(h("p",{class:"foot"}, h("b",{text:"První 3 týdny drž nízko. "}),
+        "Půjde ti to líp, než čekáš — to je ta tanečnická výbava. Přidávej až od 4. týdne, ať šlachy stíhají svaly."));
+      return;
+    }
+    p.appendChild(h("input",{class:"field sub-input",value:sub,placeholder:"Např. ~25 min · 2–3 kola",oninput:e=>{sub=e.target.value;saveSub();}}));
+    moves.forEach((mv,i)=>{
+      const nameIn=h("input",{class:"field in-name",value:mv.name,placeholder:"Název cviku",oninput:e=>{moves[i].name=e.target.value;saveMoves();}});
+      const repIn=h("input",{class:"field in-rep",value:mv.rep,placeholder:"10×",oninput:e=>{moves[i].rep=e.target.value;saveMoves();}});
+      const hintIn=h("textarea",{class:"field in-hint",placeholder:"Poznámka (nepovinné)",oninput:e=>{moves[i].hint=e.target.value;saveMoves();}}); hintIn.value=mv.hint||"";
+      const up=h("button",{class:"mini",text:"↑","aria-label":"Nahoru",onClick:()=>{if(i>0){[moves[i-1],moves[i]]=[moves[i],moves[i-1]];saveMoves();renderPlan();}}});
+      const down=h("button",{class:"mini",text:"↓","aria-label":"Dolů",onClick:()=>{if(i<moves.length-1){[moves[i+1],moves[i]]=[moves[i],moves[i+1]];saveMoves();renderPlan();}}});
+      if(i===0) up.disabled=true; if(i===moves.length-1) down.disabled=true;
+      const del=h("button",{class:"del",text:"Smazat",onClick:()=>{moves.splice(i,1);saveMoves();renderPlan();}});
+      p.appendChild(h("div",{class:"edit-move"}, h("div",{class:"edit-top"},nameIn,repIn), hintIn, h("div",{class:"edit-actions"},up,down,del)));
+    });
+    p.appendChild(h("button",{class:"add-move",text:"+  Přidat cvik",onClick:()=>{moves.push({name:"",rep:"",hint:""});saveMoves();renderPlan();
+      const inputs=p.querySelectorAll(".in-name"); if(inputs.length) inputs[inputs.length-1].focus();}}));
+  }
+
+  /* ===== controls ===== */
+  $("prev").addEventListener("click",()=>{view.setMonth(view.getMonth()-1);renderCal();});
+  $("next").addEventListener("click",()=>{view.setMonth(view.getMonth()+1);renderCal();});
+  $("jump").addEventListener("click",()=>{view=new Date();view.setDate(1);renderCal();});
+  $("reset").addEventListener("click",()=>{ if(confirm("Vymazat všechna razítka? Cviky i téma zůstanou. Tohle se nedá vrátit.")){ attended=new Set(); saveAtt(); renderCal(); } });
+
+  /* ===== backup ===== */
+  $("exportBtn").addEventListener("click",()=>{
+    const data={app:"drz-tempo",version:1,exported:new Date().toISOString(),attended:[...attended],moves,sub,theme};
+    const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download=`drz-tempo-zaloha-${keyOf(new Date())}.json`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  });
+  $("importBtn").addEventListener("click",()=>$("importFile").click());
+  $("importFile").addEventListener("change",e=>{
+    const f=e.target.files[0]; if(!f) return;
+    const r=new FileReader();
+    r.onload=()=>{
+      try{
+        const d=JSON.parse(r.result);
+        if(!d||d.app!=="drz-tempo"||!Array.isArray(d.attended)) throw new Error("bad backup");
+        if(!confirm("Nahradit aktuální data touto zálohou?")) return;
+        attended=new Set(d.attended.filter(x=>typeof x==="string"));
+        if(Array.isArray(d.moves)&&d.moves.length) moves=d.moves.map(m=>({name:String(m.name||""),rep:String(m.rep||""),hint:String(m.hint||"")}));
+        if(typeof d.sub==="string") sub=d.sub;
+        if(typeof d.theme==="string"&&THEMES.some(x=>x.id===d.theme)) theme=d.theme;
+        saveAtt(); saveMoves(); saveSub(); applyTheme(theme); renderCal(); renderPlan();
+      }catch(err){ alert("Tohle nevypadá jako záloha z Drž tempo."); }
+      finally{ e.target.value=""; }
+    };
+    r.readAsText(f);
+  });
+
+  $("gear").addEventListener("click",e=>{ e.stopPropagation(); const pop=$("themePop"); pop.hidden?openPop():closePop(); });
+  $("themePop").addEventListener("click",e=>e.stopPropagation());
+  document.addEventListener("click",()=>closePop());
+  document.addEventListener("keydown",e=>{ if(e.key==="Escape") closePop(); });
+
+  /* ===== init ===== */
+  load(); applyTheme(theme); renderThemeOpts(); renderDow(); renderCal(); renderPlan();
+
+  /* offline: service worker funguje jen přes http(s), při otevření souboru z disku se přeskočí */
+  if("serviceWorker" in navigator && location.protocol.indexOf("http")===0){
+    window.addEventListener("load",()=>{ navigator.serviceWorker.register("sw.js").catch(()=>{}); });
+  }
+})();
+</script>
+</body>
+</html>
