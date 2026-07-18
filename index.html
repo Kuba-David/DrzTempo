@@ -96,6 +96,10 @@
   .theme-opt .chk{color:var(--accent);font-weight:700;opacity:0;font-size:14px;}
   .theme-opt.sel .chk{opacity:1;}
   .theme-opt.sel .sw{box-shadow:0 0 0 2px var(--accent);}
+  .day-chips{display:flex;gap:4px;padding:0 6px 8px;}
+  .dchip{flex:1;padding:7px 0;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--muted);font-size:11px;font-weight:600;cursor:pointer;font-family:"Space Grotesk",sans-serif;text-align:center;}
+  .dchip.sel{background:color-mix(in srgb, var(--accent) 15%, transparent);border-color:var(--accent-deep);color:var(--accent);}
+  .dchip:focus-visible{outline:2px solid var(--accent);outline-offset:1px;}
 
   /* ===== header ===== */
   .eyebrow{font-size:11px;letter-spacing:.32em;text-transform:uppercase;color:var(--accent);opacity:.9;margin:0 0 6px;font-weight:600;padding-right:52px;}
@@ -187,7 +191,13 @@
   .sub-input{margin-bottom:14px;font-size:12px;}
   .edit-move{background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px;}
   .edit-top{display:flex;gap:8px;}
-  .in-name{flex:1;} .in-rep{width:92px;flex:none;text-align:center;}
+  .name-wrap{position:relative;flex:1;min-width:0;}
+  .in-rep{width:92px;flex:none;text-align:center;}
+  .sugg{position:absolute;left:0;right:-100px;top:calc(100% + 4px);z-index:30;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);max-height:230px;overflow-y:auto;padding:4px;}
+  .sugg[hidden]{display:none;}
+  .sopt{display:flex;justify-content:space-between;align-items:baseline;gap:10px;width:100%;background:none;border:none;text-align:left;padding:9px 10px;border-radius:8px;cursor:pointer;color:var(--text);font-family:"Space Grotesk",sans-serif;font-size:13.5px;}
+  .sopt:hover{background:color-mix(in srgb, var(--accent) 10%, transparent);}
+  .srep{color:var(--muted);font-size:11.5px;white-space:nowrap;flex:none;}
   .in-hint{margin-top:8px;resize:vertical;min-height:38px;line-height:1.35;}
   .edit-actions{display:flex;gap:6px;margin-top:8px;align-items:center;}
   .mini{width:34px;height:32px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--text);cursor:pointer;font-size:15px;}
@@ -215,7 +225,7 @@
 
   <div class="wrap">
     <header>
-      <p class="eyebrow">Madeira · Ne · Út · Čt</p>
+      <p class="eyebrow" id="eyebrow">Madeira</p>
       <h1>Drž <em>tempo</em></h1>
       <p class="lede">Žádný výkon, žádný gains. Jediná otázka: dokopal ses tam? Trefíš beat — orazítkuješ si den.</p>
     </header>
@@ -265,7 +275,7 @@
     get(k){ try{ return localStorage.getItem(k); }catch(e){ return (k in mem)?mem[k]:null; } },
     set(k,v){ try{ localStorage.setItem(k,v); }catch(e){ mem[k]=v; } }
   };
-  const K_ATT="tempo:attended:v1", K_MOVES="tempo:moves:v1", K_SUB="tempo:sub:v1", K_THEME="tempo:theme:v1", K_PLANS="tempo:plans:v2";
+  const K_ATT="tempo:attended:v1", K_MOVES="tempo:moves:v1", K_SUB="tempo:sub:v1", K_THEME="tempo:theme:v1", K_PLANS="tempo:plans:v2", K_SCHED="tempo:sched:v1", K_BYDAY="tempo:plansByDay:v3";
 
   const THEMES=[
     {id:"dark",   name:"Parket (tmavé)", bg:"#1B1220", accent:"#E4B75A"},
@@ -332,18 +342,20 @@
   const MONTHS=["Leden","Únor","Březen","Duben","Květen","Červen","Červenec","Srpen","Září","Říjen","Listopad","Prosinec"];
   const MONTHS_GEN=["ledna","února","března","dubna","května","června","července","srpna","září","října","listopadu","prosince"];
   const DOW=["Po","Út","St","Čt","Pá","So","Ne"];
-  const BEAT_COLS=[1,3,6];
-  const SCHED_DAYS=[0,2,4]; /* Ne, Út, Čt → Den A, B, C */
-  const PLAN_META=[{label:"Den A",day:"Ne"},{label:"Den B",day:"Út"},{label:"Den C",day:"Čt"}];
+  const DAY_NAMES=["Ne","Po","Út","St","Čt","Pá","So"]; /* index = getDay() */
+  const LETTERS="ABCDEFG";
 
-  let attended=new Set(), plans=[], planIx=0, theme="dark", editing=false;
+  /* days = vybrané tréninkové dny (hodnoty getDay), byDay = plán pro každý den */
+  let attended=new Set(), days=[0,2,4], byDay={}, planIx=0, theme="dark", editing=false;
   let view=new Date(); view.setDate(1);
 
   const $=id=>document.getElementById(id);
   const pad=n=>String(n).padStart(2,"0");
   const keyOf=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-  const isScheduled=d=>SCHED_DAYS.includes(d.getDay());
-  const planIxFor=d=>SCHED_DAYS.indexOf(d.getDay());
+  const wk=d=>(d+6)%7; /* Po=0 … Ne=6, pro řazení podle týdne */
+  const sortDays=()=>days.sort((a,b)=>wk(a)-wk(b));
+  const isScheduled=d=>days.includes(d.getDay());
+  const planIxFor=d=>days.indexOf(d.getDay());
   const startOfToday=()=>{const t=new Date();t.setHours(0,0,0,0);return t;};
   const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x;};
   const sameDay=(a,b)=>a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();
@@ -365,19 +377,29 @@
     moves:(p&&Array.isArray(p.moves)&&p.moves.length)?p.moves.map(normMove):DEFAULT_MOVES.map(m=>({...m})),
     sub:(p&&typeof p.sub==="string")?p.sub:DEFAULT_SUB
   });
-  const planFromV1=(mv,s)=>{ const base=normPlan({moves:mv,sub:s}); return [0,1,2].map(()=>({sub:base.sub,moves:base.moves.map(m=>({...m}))})); };
+  const clonePlan=p=>({sub:p.sub,moves:p.moves.map(m=>({...m}))});
 
   function load(){
     try{ const a=store.get(K_ATT); if(a) attended=new Set(JSON.parse(a)); }catch(e){}
-    let raw=null;
-    try{ const p=store.get(K_PLANS); if(p) raw=JSON.parse(p); }catch(e){}
-    if(Array.isArray(raw)&&raw.length===3){ plans=raw.map(normPlan); }
+    /* tréninkové dny */
+    let ds=null; try{ const s=store.get(K_SCHED); if(s) ds=JSON.parse(s); }catch(e){}
+    if(Array.isArray(ds)) days=[...new Set(ds.filter(n=>Number.isInteger(n)&&n>=0&&n<=6))];
+    if(!days.length) days=[0,2,4];
+    sortDays();
+    /* plány: v3 (podle dne) → v2 (pole A/B/C pro Ne/Út/Čt) → v1 (jeden plán) */
+    let seed=null;
+    let bd=null; try{ const p=store.get(K_BYDAY); if(p) bd=JSON.parse(p); }catch(e){}
+    if(bd&&typeof bd==="object"&&!Array.isArray(bd)){ byDay={}; for(const k in bd) byDay[k]=normPlan(bd[k]); }
     else{
-      /* migrace ze starší verze s jedním plánem pro všechny dny */
-      let om=null; try{ const m=store.get(K_MOVES); if(m) om=JSON.parse(m); }catch(e){}
-      const os=store.get(K_SUB);
-      plans=planFromV1(om,(os!=null)?os:undefined);
+      let v2=null; try{ const p=store.get(K_PLANS); if(p) v2=JSON.parse(p); }catch(e){}
+      if(Array.isArray(v2)&&v2.length===3){ byDay={0:normPlan(v2[0]),2:normPlan(v2[1]),4:normPlan(v2[2])}; }
+      else{
+        let om=null; try{ const m=store.get(K_MOVES); if(m) om=JSON.parse(m); }catch(e){}
+        const os=store.get(K_SUB);
+        seed=normPlan({moves:om,sub:(os!=null)?os:undefined});
+      }
     }
+    days.forEach(d=>{ if(!byDay[d]) byDay[d]=seed?clonePlan(seed):normPlan(null); });
     const t=store.get(K_THEME);
     if(t&&THEMES.some(x=>x.id===t)) theme=t;
     else theme=(window.matchMedia&&matchMedia("(prefers-color-scheme: light)").matches)?"light":"dark";
@@ -386,7 +408,8 @@
     for(let i=0;i<7;i++){ const ix=planIxFor(addDays(today,i)); if(ix>-1){ planIx=ix; break; } }
   }
   const saveAtt =()=>store.set(K_ATT, JSON.stringify([...attended]));
-  const savePlans=()=>store.set(K_PLANS, JSON.stringify(plans));
+  const saveSched=()=>store.set(K_SCHED, JSON.stringify(days));
+  const savePlans=()=>store.set(K_BYDAY, JSON.stringify(byDay));
   const saveTheme=()=>store.set(K_THEME, theme);
 
   function tempo(){
@@ -419,12 +442,33 @@
         sw, h("span",{class:"tname",text:t.name}), h("span",{class:"chk",text:"✓"})
       ));
     });
+    pop.appendChild(h("div",{class:"h",text:"Tréninkové dny"}));
+    const chips=h("div",{class:"day-chips"});
+    [1,2,3,4,5,6,0].forEach(d=>{
+      chips.appendChild(h("button",{class:"dchip"+(days.includes(d)?" sel":""),
+        "aria-pressed":days.includes(d)?"true":"false","aria-label":"Tréninkový den "+DAY_NAMES[d],
+        text:DAY_NAMES[d],onClick:()=>toggleDay(d)}));
+    });
+    pop.appendChild(chips);
   }
+  function toggleDay(d){
+    if(days.includes(d)){
+      if(days.length===1){ alert("Aspoň jeden tréninkový den musí zůstat."); return; }
+      days=days.filter(x=>x!==d); /* plán dne zůstává uložený pro případný návrat */
+    }else{
+      days.push(d); sortDays();
+      if(!byDay[d]) byDay[d]=normPlan(null);
+    }
+    if(planIx>=days.length) planIx=days.length-1;
+    saveSched(); savePlans(); renderAll();
+  }
+  function renderEyebrow(){ $("eyebrow").textContent="Madeira · "+days.map(d=>DAY_NAMES[d]).join(" · "); }
+  function renderAll(){ renderEyebrow(); renderDow(); renderCal(); renderPlan(); renderThemeOpts(); }
   function openPop(){ $("themePop").hidden=false; $("gear").setAttribute("aria-expanded","true"); }
   function closePop(){ $("themePop").hidden=true; $("gear").setAttribute("aria-expanded","false"); }
 
   /* ===== calendar ===== */
-  function renderDow(){ const el=$("dow"); el.innerHTML=""; DOW.forEach((d,i)=>{ const s=document.createElement("span"); s.textContent=d; if(BEAT_COLS.includes(i)) s.className="beat"; el.appendChild(s); }); }
+  function renderDow(){ const el=$("dow"); el.innerHTML=""; const beat=days.map(wk); DOW.forEach((d,i)=>{ const s=document.createElement("span"); s.textContent=d; if(beat.includes(i)) s.className="beat"; el.appendChild(s); }); }
   function renderCal(){
     const y=view.getFullYear(), m=view.getMonth();
     $("monthLbl").firstChild.textContent=`${MONTHS[m]} ${y}`;
@@ -458,19 +502,21 @@
   /* ===== plan ===== */
   function renderPlan(){
     const p=$("plan"); p.innerHTML="";
-    const cur=plans[planIx];
+    const cur=byDay[days[planIx]];
     const todayIx=planIxFor(startOfToday());
     p.appendChild(h("div",{class:"plan-head"},
       h("div",{}, h("h2",{text:todayIx===planIx?"Dnešní choreografie":"Choreografie"}), editing?null:h("p",{class:"sub",text:cur.sub})),
       h("button",{class:"edit-btn"+(editing?" done-btn":""),text:editing?"Hotovo":"Upravit",onClick:()=>{editing=!editing;renderPlan();}})
     ));
-    const tabs=h("div",{class:"plan-tabs",role:"tablist","aria-label":"Tréninkové dny"});
-    PLAN_META.forEach((meta,i)=>{
-      tabs.appendChild(h("button",{class:"ptab"+(i===planIx?" sel":""),role:"tab","aria-selected":i===planIx?"true":"false",
-        onClick:()=>{ if(planIx!==i){ planIx=i; renderPlan(); } }},
-        meta.label, h("small",{text:todayIx===i?meta.day+" · dnes":meta.day})));
-    });
-    p.appendChild(tabs);
+    if(days.length>1){
+      const tabs=h("div",{class:"plan-tabs",role:"tablist","aria-label":"Tréninkové dny"});
+      days.forEach((d,i)=>{
+        tabs.appendChild(h("button",{class:"ptab"+(i===planIx?" sel":""),role:"tab","aria-selected":i===planIx?"true":"false",
+          onClick:()=>{ if(planIx!==i){ planIx=i; renderPlan(); } }},
+          "Den "+LETTERS[i], h("small",{text:todayIx===i?DAY_NAMES[d]+" · dnes":DAY_NAMES[d]})));
+      });
+      p.appendChild(tabs);
+    }
     if(!editing){
       cur.moves.forEach((mv,i)=>{
         p.appendChild(h("div",{class:"move"},
@@ -484,26 +530,48 @@
       return;
     }
     p.appendChild(h("input",{class:"field sub-input",value:cur.sub,placeholder:"Např. ~25 min · 2–3 kola",oninput:e=>{cur.sub=e.target.value;savePlans();}}));
+    const strip=s=>s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
     cur.moves.forEach((mv,i)=>{
       const repIn=h("input",{class:"field in-rep",value:mv.rep,placeholder:"10×",oninput:e=>{cur.moves[i].rep=e.target.value;savePlans();}});
       const hintIn=h("textarea",{class:"field in-hint",placeholder:"Poznámka (nepovinné)",oninput:e=>{cur.moves[i].hint=e.target.value;savePlans();}}); hintIn.value=mv.hint||"";
-      const nameIn=h("input",{class:"field in-name",value:mv.name,list:"exCatalog",placeholder:"Vyber cvik nebo napiš vlastní",oninput:e=>{
+      const panel=h("div",{class:"sugg",hidden:true});
+      const nameIn=h("input",{class:"field in-name",value:mv.name,placeholder:"Vyber cvik nebo napiš vlastní",autocomplete:"off",oninput:e=>{
         const v=e.target.value; cur.moves[i].name=v;
         const c=CATALOG.find(x=>x.name.toLowerCase()===v.trim().toLowerCase());
         if(c){ if(!cur.moves[i].rep){ cur.moves[i].rep=c.rep; repIn.value=c.rep; } if(!cur.moves[i].hint){ cur.moves[i].hint=c.hint; hintIn.value=c.hint; } }
-        savePlans();
+        savePlans(); showSugg();
       }});
+      function showSugg(){
+        const q=strip(nameIn.value.trim());
+        const hits=CATALOG.filter(c=>!q||strip(c.name).includes(q));
+        panel.innerHTML="";
+        if(!hits.length){ panel.hidden=true; return; }
+        hits.forEach(c=>{
+          const b=h("button",{class:"sopt",type:"button"}, h("span",{text:c.name}), h("span",{class:"srep",text:c.rep}));
+          b.addEventListener("mousedown",ev=>ev.preventDefault()); /* ať input neztratí focus dřív, než dorazí click */
+          b.addEventListener("click",()=>{
+            cur.moves[i].name=c.name; cur.moves[i].rep=c.rep; cur.moves[i].hint=c.hint;
+            nameIn.value=c.name; repIn.value=c.rep; hintIn.value=c.hint;
+            savePlans(); panel.hidden=true;
+          });
+          panel.appendChild(b);
+        });
+        panel.hidden=false;
+      }
+      nameIn.addEventListener("focus",showSugg);
+      nameIn.addEventListener("blur",()=>setTimeout(()=>{ panel.hidden=true; },200));
+      nameIn.addEventListener("keydown",e=>{ if(e.key==="Escape") panel.hidden=true; });
       const up=h("button",{class:"mini",text:"↑","aria-label":"Nahoru",onClick:()=>{if(i>0){[cur.moves[i-1],cur.moves[i]]=[cur.moves[i],cur.moves[i-1]];savePlans();renderPlan();}}});
       const down=h("button",{class:"mini",text:"↓","aria-label":"Dolů",onClick:()=>{if(i<cur.moves.length-1){[cur.moves[i+1],cur.moves[i]]=[cur.moves[i],cur.moves[i+1]];savePlans();renderPlan();}}});
       if(i===0) up.disabled=true; if(i===cur.moves.length-1) down.disabled=true;
       const del=h("button",{class:"del",text:"Smazat",onClick:()=>{cur.moves.splice(i,1);savePlans();renderPlan();}});
-      p.appendChild(h("div",{class:"edit-move"}, h("div",{class:"edit-top"},nameIn,repIn), hintIn, h("div",{class:"edit-actions"},up,down,del)));
+      p.appendChild(h("div",{class:"edit-move"}, h("div",{class:"edit-top"}, h("div",{class:"name-wrap"},nameIn,panel), repIn), hintIn, h("div",{class:"edit-actions"},up,down,del)));
     });
     p.appendChild(h("button",{class:"add-move",text:"+  Přidat cvik",onClick:()=>{cur.moves.push({name:"",rep:"",hint:""});savePlans();renderPlan();
       const inputs=p.querySelectorAll(".in-name"); if(inputs.length) inputs[inputs.length-1].focus();}}));
-    p.appendChild(h("button",{class:"copy-all",text:"⧉ Nastavit tenhle plán pro všechny dny",onClick:()=>{
-      if(!confirm(`Přepsat choreografie ostatních dnů podle dne ${"ABC"[planIx]}?`)) return;
-      plans=plans.map((pl,i)=>i===planIx?pl:{sub:cur.sub,moves:cur.moves.map(m=>({...m}))});
+    if(days.length>1) p.appendChild(h("button",{class:"copy-all",text:"⧉ Nastavit tenhle plán pro všechny dny",onClick:()=>{
+      if(!confirm(`Přepsat choreografie ostatních dnů podle dne ${LETTERS[planIx]}?`)) return;
+      days.forEach((d,i)=>{ if(i!==planIx) byDay[d]=clonePlan(cur); });
       savePlans();
     }}));
   }
@@ -516,7 +584,7 @@
 
   /* ===== backup ===== */
   $("exportBtn").addEventListener("click",()=>{
-    const data={app:"drz-tempo",version:2,exported:new Date().toISOString(),attended:[...attended],plans,theme};
+    const data={app:"drz-tempo",version:3,exported:new Date().toISOString(),attended:[...attended],days,plans:byDay,theme};
     const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
     const a=document.createElement("a");
     a.href=URL.createObjectURL(blob);
@@ -534,10 +602,14 @@
         if(!d||d.app!=="drz-tempo"||!Array.isArray(d.attended)) throw new Error("bad backup");
         if(!confirm("Nahradit aktuální data touto zálohou?")) return;
         attended=new Set(d.attended.filter(x=>typeof x==="string"));
-        if(Array.isArray(d.plans)&&d.plans.length===3) plans=d.plans.map(normPlan);
-        else if(Array.isArray(d.moves)&&d.moves.length) plans=planFromV1(d.moves,d.sub); /* stará záloha v1 */
+        if(Array.isArray(d.days)&&d.days.length){ days=[...new Set(d.days.filter(n=>Number.isInteger(n)&&n>=0&&n<=6))]; if(!days.length) days=[0,2,4]; sortDays(); }
+        if(d.plans&&typeof d.plans==="object"&&!Array.isArray(d.plans)){ byDay={}; for(const k in d.plans) byDay[k]=normPlan(d.plans[k]); } /* v3 */
+        else if(Array.isArray(d.plans)&&d.plans.length===3){ days=[0,2,4]; sortDays(); byDay={0:normPlan(d.plans[0]),2:normPlan(d.plans[1]),4:normPlan(d.plans[2])}; } /* v2 */
+        else if(Array.isArray(d.moves)&&d.moves.length){ const base=normPlan({moves:d.moves,sub:d.sub}); byDay={}; days.forEach(x=>byDay[x]=clonePlan(base)); } /* v1 */
+        days.forEach(x=>{ if(!byDay[x]) byDay[x]=normPlan(null); });
+        planIx=Math.min(planIx,days.length-1);
         if(typeof d.theme==="string"&&THEMES.some(x=>x.id===d.theme)) theme=d.theme;
-        saveAtt(); savePlans(); applyTheme(theme); renderCal(); renderPlan();
+        saveAtt(); saveSched(); savePlans(); applyTheme(theme); renderAll();
       }catch(err){ alert("Tohle nevypadá jako záloha z Drž tempo."); }
       finally{ e.target.value=""; }
     };
@@ -550,11 +622,7 @@
   document.addEventListener("keydown",e=>{ if(e.key==="Escape") closePop(); });
 
   /* ===== init ===== */
-  const dl=h("datalist",{id:"exCatalog"});
-  CATALOG.forEach(c=>dl.appendChild(h("option",{value:c.name})));
-  document.body.appendChild(dl);
-
-  load(); applyTheme(theme); renderThemeOpts(); renderDow(); renderCal(); renderPlan();
+  load(); applyTheme(theme); renderAll();
 
   /* offline: service worker funguje jen přes http(s), při otevření souboru z disku se přeskočí */
   if("serviceWorker" in navigator && location.protocol.indexOf("http")===0){
