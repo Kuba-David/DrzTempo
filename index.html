@@ -100,6 +100,7 @@
   .dchip{flex:1;padding:7px 0;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--muted);font-size:11px;font-weight:600;cursor:pointer;font-family:"Space Grotesk",sans-serif;text-align:center;}
   .dchip.sel{background:color-mix(in srgb, var(--accent) 15%, transparent);border-color:var(--accent-deep);color:var(--accent);}
   .dchip:focus-visible{outline:2px solid var(--accent);outline-offset:1px;}
+  .day-note{font-size:10px;color:var(--muted);padding:0 8px 8px;line-height:1.4;}
 
   /* ===== header ===== */
   .eyebrow{font-size:11px;letter-spacing:.32em;text-transform:uppercase;color:var(--accent);opacity:.9;margin:0 0 6px;font-weight:600;padding-right:52px;}
@@ -275,7 +276,7 @@
     get(k){ try{ return localStorage.getItem(k); }catch(e){ return (k in mem)?mem[k]:null; } },
     set(k,v){ try{ localStorage.setItem(k,v); }catch(e){ mem[k]=v; } }
   };
-  const K_ATT="tempo:attended:v1", K_MOVES="tempo:moves:v1", K_SUB="tempo:sub:v1", K_THEME="tempo:theme:v1", K_PLANS="tempo:plans:v2", K_SCHED="tempo:sched:v1", K_BYDAY="tempo:plansByDay:v3";
+  const K_ATT="tempo:attended:v1", K_MOVES="tempo:moves:v1", K_SUB="tempo:sub:v1", K_THEME="tempo:theme:v1", K_PLANS="tempo:plans:v2", K_SCHED="tempo:sched:v1", K_BYDAY="tempo:plansByDay:v3", K_SCHED_H="tempo:schedHist:v1";
 
   const THEMES=[
     {id:"dark",   name:"Parket (tmavé)", bg:"#1B1220", accent:"#E4B75A"},
@@ -345,16 +346,20 @@
   const DAY_NAMES=["Ne","Po","Út","St","Čt","Pá","So"]; /* index = getDay() */
   const LETTERS="ABCDEFG";
 
-  /* days = vybrané tréninkové dny (hodnoty getDay), byDay = plán pro každý den */
-  let attended=new Set(), days=[0,2,4], byDay={}, planIx=0, theme="dark", editing=false;
+  /* days = aktuální tréninkové dny (hodnoty getDay), byDay = plán pro každý den.
+     schedHist = historie rozvrhu: [{from:"YYYY-MM-DD", days:[…]}]; každý den v minulosti
+     se hodnotí podle rozvrhu platného v ten den, takže změna dnů nerozbije starý streak. */
+  let attended=new Set(), days=[0,2,4], byDay={}, schedHist=[], planIx=0, theme="dark", editing=false;
   let view=new Date(); view.setDate(1);
 
   const $=id=>document.getElementById(id);
   const pad=n=>String(n).padStart(2,"0");
   const keyOf=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
   const wk=d=>(d+6)%7; /* Po=0 … Ne=6, pro řazení podle týdne */
-  const sortDays=()=>days.sort((a,b)=>wk(a)-wk(b));
-  const isScheduled=d=>days.includes(d.getDay());
+  const normDays=a=>{ if(!Array.isArray(a)) return null; const v=[...new Set(a.filter(n=>Number.isInteger(n)&&n>=0&&n<=6))]; return v.length?v.sort((x,y)=>wk(x)-wk(y)):null; };
+  const normEntry=e=>{ const d=normDays(e&&e.days); return (d&&e&&typeof e.from==="string")?{from:e.from,days:d}:null; };
+  const daysOn=d=>{ const k=keyOf(d); let cur=schedHist.length?schedHist[0].days:days; for(const e of schedHist){ if(e.from<=k) cur=e.days; else break; } return cur; };
+  const isScheduled=d=>daysOn(d).includes(d.getDay());
   const planIxFor=d=>days.indexOf(d.getDay());
   const startOfToday=()=>{const t=new Date();t.setHours(0,0,0,0);return t;};
   const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x;};
@@ -381,11 +386,15 @@
 
   function load(){
     try{ const a=store.get(K_ATT); if(a) attended=new Set(JSON.parse(a)); }catch(e){}
-    /* tréninkové dny */
-    let ds=null; try{ const s=store.get(K_SCHED); if(s) ds=JSON.parse(s); }catch(e){}
-    if(Array.isArray(ds)) days=[...new Set(ds.filter(n=>Number.isInteger(n)&&n>=0&&n<=6))];
-    if(!days.length) days=[0,2,4];
-    sortDays();
+    /* tréninkové dny: historie změn; migrace ze staršího jednoduchého seznamu */
+    let hist=null; try{ const s=store.get(K_SCHED_H); if(s) hist=JSON.parse(s); }catch(e){}
+    if(Array.isArray(hist)) schedHist=hist.map(normEntry).filter(Boolean);
+    if(!schedHist.length){
+      let ds=null; try{ const s=store.get(K_SCHED); if(s) ds=JSON.parse(s); }catch(e){}
+      schedHist=[{from:"2000-01-01",days:normDays(ds)||[0,2,4]}];
+    }
+    schedHist.sort((a,b)=>a.from<b.from?-1:1);
+    days=daysOn(startOfToday()).slice();
     /* plány: v3 (podle dne) → v2 (pole A/B/C pro Ne/Út/Čt) → v1 (jeden plán) */
     let seed=null;
     let bd=null; try{ const p=store.get(K_BYDAY); if(p) bd=JSON.parse(p); }catch(e){}
@@ -408,7 +417,7 @@
     for(let i=0;i<7;i++){ const ix=planIxFor(addDays(today,i)); if(ix>-1){ planIx=ix; break; } }
   }
   const saveAtt =()=>store.set(K_ATT, JSON.stringify([...attended]));
-  const saveSched=()=>store.set(K_SCHED, JSON.stringify(days));
+  const saveSched=()=>store.set(K_SCHED_H, JSON.stringify(schedHist));
   const savePlans=()=>store.set(K_BYDAY, JSON.stringify(byDay));
   const saveTheme=()=>store.set(K_THEME, theme);
 
@@ -450,15 +459,26 @@
         text:DAY_NAMES[d],onClick:()=>toggleDay(d)}));
     });
     pop.appendChild(chips);
+    pop.appendChild(h("div",{class:"day-note",text:"Změna platí od dneška — starý streak zůstává."}));
   }
   function toggleDay(d){
+    let nd;
     if(days.includes(d)){
       if(days.length===1){ alert("Aspoň jeden tréninkový den musí zůstat."); return; }
-      days=days.filter(x=>x!==d); /* plán dne zůstává uložený pro případný návrat */
+      nd=days.filter(x=>x!==d); /* plán dne zůstává uložený pro případný návrat */
     }else{
-      days.push(d); sortDays();
+      nd=normDays(days.concat(d));
       if(!byDay[d]) byDay[d]=normPlan(null);
     }
+    /* změna platí od dneška: dnešní záznam v historii se přepíše, jinak se přidá nový */
+    const todayK=keyOf(startOfToday());
+    schedHist=schedHist.filter(e=>e.from<=todayK);
+    if(!schedHist.length) schedHist=[{from:"2000-01-01",days:[0,2,4]}];
+    const last=schedHist[schedHist.length-1];
+    if(last.from===todayK) last.days=nd; else schedHist.push({from:todayK,days:nd});
+    const n=schedHist.length; /* návrat k předchozímu rozvrhu týž den → záznam zahodit */
+    if(n>1&&schedHist[n-1].from===todayK&&String(schedHist[n-2].days)===String(schedHist[n-1].days)) schedHist.pop();
+    days=nd;
     if(planIx>=days.length) planIx=days.length-1;
     saveSched(); savePlans(); renderAll();
   }
@@ -584,7 +604,7 @@
 
   /* ===== backup ===== */
   $("exportBtn").addEventListener("click",()=>{
-    const data={app:"drz-tempo",version:3,exported:new Date().toISOString(),attended:[...attended],days,plans:byDay,theme};
+    const data={app:"drz-tempo",version:4,exported:new Date().toISOString(),attended:[...attended],schedHist,plans:byDay,theme};
     const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
     const a=document.createElement("a");
     a.href=URL.createObjectURL(blob);
@@ -602,10 +622,12 @@
         if(!d||d.app!=="drz-tempo"||!Array.isArray(d.attended)) throw new Error("bad backup");
         if(!confirm("Nahradit aktuální data touto zálohou?")) return;
         attended=new Set(d.attended.filter(x=>typeof x==="string"));
-        if(Array.isArray(d.days)&&d.days.length){ days=[...new Set(d.days.filter(n=>Number.isInteger(n)&&n>=0&&n<=6))]; if(!days.length) days=[0,2,4]; sortDays(); }
-        if(d.plans&&typeof d.plans==="object"&&!Array.isArray(d.plans)){ byDay={}; for(const k in d.plans) byDay[k]=normPlan(d.plans[k]); } /* v3 */
-        else if(Array.isArray(d.plans)&&d.plans.length===3){ days=[0,2,4]; sortDays(); byDay={0:normPlan(d.plans[0]),2:normPlan(d.plans[1]),4:normPlan(d.plans[2])}; } /* v2 */
+        if(Array.isArray(d.schedHist)){ const hs=d.schedHist.map(normEntry).filter(Boolean); if(hs.length){ hs.sort((a,b)=>a.from<b.from?-1:1); schedHist=hs; } } /* v4 */
+        else if(Array.isArray(d.days)&&d.days.length){ const nd=normDays(d.days); if(nd) schedHist=[{from:"2000-01-01",days:nd}]; } /* v3 */
+        if(d.plans&&typeof d.plans==="object"&&!Array.isArray(d.plans)){ byDay={}; for(const k in d.plans) byDay[k]=normPlan(d.plans[k]); } /* v3+v4 */
+        else if(Array.isArray(d.plans)&&d.plans.length===3){ schedHist=[{from:"2000-01-01",days:[0,2,4]}]; byDay={0:normPlan(d.plans[0]),2:normPlan(d.plans[1]),4:normPlan(d.plans[2])}; } /* v2 */
         else if(Array.isArray(d.moves)&&d.moves.length){ const base=normPlan({moves:d.moves,sub:d.sub}); byDay={}; days.forEach(x=>byDay[x]=clonePlan(base)); } /* v1 */
+        days=daysOn(startOfToday()).slice();
         days.forEach(x=>{ if(!byDay[x]) byDay[x]=normPlan(null); });
         planIx=Math.min(planIx,days.length-1);
         if(typeof d.theme==="string"&&THEMES.some(x=>x.id===d.theme)) theme=d.theme;

@@ -10,7 +10,7 @@ Když ano, orazítkuješ si den v kalendáři a držíš tempo.
 ## Co umí
 
 - 📅 **Kalendář docházky** — kliknutím orazítkuješ den, kdy ses ukázal. Tréninkové dny jsou zvýrazněné, návštěva mimo plán se počítá jako bonus (+).
-- ⚙️ **Nastavitelné tréninkové dny** — v nastavení (kolečko vpravo nahoře) si vybereš, které dny v týdnu cvičíš — klidně dva, klidně pět. Kalendář, streak i plány se přizpůsobí. Výchozí: Út · Čt · Ne.
+- ⚙️ **Nastavitelné tréninkové dny** — v nastavení (kolečko vpravo nahoře) si vybereš, které dny v týdnu cvičíš — klidně dva, klidně pět. Kalendář, streak i plány se přizpůsobí. Výchozí: Út · Čt · Ne. **Změna platí od dneška** — appka si pamatuje historii rozvrhu a minulost hodnotí podle rozvrhu platného v daný den, takže změna dnů nikdy nerozbije nastřádaný streak.
 - 🔥 **Tempo (streak)** — počítá tréninky v řadě podle plánovaných dnů a povzbuzuje hláškami.
 - 📝 **Choreografie pro každý den zvlášť** — každý tréninkový den má vlastní plán (Den A, Den B, …). Cviky přepíšeš, přeskládáš, doplníš — a když chceš všude stejný plán, jedním tlačítkem ho zkopíruješ do všech dnů. Plán vypnutého dne se neztrácí; po opětovném zapnutí dne se vrátí.
 - 🔎 **Našeptávač cviků** — při psaní názvu cviku se přímo ve stránce otevře nabídka ~40 nejběžnějších cviků (dřepy, mrtvé tahy, přítahy, tlaky, core…), hledá i bez diakritiky; vybraný cvik rovnou předvyplní série × opakování a poznámku k technice.
