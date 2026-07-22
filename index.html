@@ -223,7 +223,8 @@
   /* ===== modal poznámky ===== */
   .modal{position:fixed;inset:0;z-index:60;display:grid;place-items:center;background:rgba(0,0,0,.55);padding:20px;}
   .modal[hidden]{display:none;}
-  .modal-card{width:100%;max-width:420px;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:var(--shadow);}
+  .modal-card{width:100%;max-width:420px;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:var(--shadow);user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;}
+  .modal-card .note-ta{user-select:text;-webkit-user-select:text;}
   .modal-title{font-family:"Bodoni Moda",serif;font-size:19px;}
   .modal-sub{font-size:11.5px;color:var(--muted);margin-top:2px;}
   .note-ta{margin-top:12px;min-height:110px;resize:vertical;line-height:1.5;}
@@ -547,12 +548,18 @@
       if(d>today&&!done){ btn.classList.add("out"); btn.disabled=true; }
       btn.setAttribute("aria-pressed",done?"true":"false");
       btn.setAttribute("aria-label",`${day}. ${MONTHS_GEN[m]} ${y}${done?" – orazítkováno":""}${notes[k]?" – s poznámkou":""}`);
-      /* klik = razítko; dlouhé podržení (nebo pravé tlačítko) = poznámka ke dni */
-      let lpTimer=null, lpFired=false;
+      /* klik = razítko; dlouhé podržení (nebo pravé tlačítko) = poznámka ke dni.
+         Modal se otevírá až po puštění prstu — kdyby se objevil už během držení,
+         Android na prvku pod prstem spustí výběr textu. */
+      let lpTimer=null, lpFired=false, ptrType="mouse";
       const lpCancel=()=>{ if(lpTimer){ clearTimeout(lpTimer); lpTimer=null; } };
-      btn.addEventListener("pointerdown",()=>{ lpFired=false; lpCancel(); lpTimer=setTimeout(()=>{ lpFired=true; openNote(k); },500); });
-      btn.addEventListener("pointerup",lpCancel); btn.addEventListener("pointerleave",lpCancel); btn.addEventListener("pointercancel",lpCancel);
-      btn.addEventListener("contextmenu",ev=>{ ev.preventDefault(); if(!lpFired) openNote(k); });
+      btn.addEventListener("pointerdown",e=>{ ptrType=e.pointerType||"mouse"; lpFired=false; lpCancel();
+        lpTimer=setTimeout(()=>{ lpFired=true; if(navigator.vibrate) navigator.vibrate(12); },500); });
+      btn.addEventListener("pointerup",()=>{ lpCancel(); if(lpFired) openNote(k); });
+      btn.addEventListener("pointerleave",lpCancel);
+      btn.addEventListener("pointercancel",()=>{ lpCancel(); lpFired=false; });
+      btn.addEventListener("contextmenu",ev=>{ ev.preventDefault();
+        if(ptrType==="mouse"&&!lpFired){ lpCancel(); lpFired=true; openNote(k); } });
       btn.addEventListener("click",()=>{
         if(lpFired){ lpFired=false; return; }
         if(attended.has(k)){ attended.delete(k); }
@@ -684,6 +691,8 @@
      zavřelo už samotné puštění prstu po dlouhém podržení dne v kalendáři) */
   let backdropDown=false;
   $("noteModal").addEventListener("pointerdown",e=>{ backdropDown=(e.target===$("noteModal")); });
+  /* ghost-click po puštění dlouhého podržení dopadá na pozadí — nesmí sebrat fokus textarey */
+  $("noteModal").addEventListener("mousedown",e=>{ if(e.target===$("noteModal")) e.preventDefault(); });
   $("noteModal").addEventListener("click",e=>{ if(e.target===$("noteModal")&&backdropDown){ backdropDown=false; closeNote(); } });
 
   /* ===== controls ===== */
