@@ -1,5 +1,5 @@
 /* Drž tempo – service worker: po první návštěvě funguje appka offline. */
-const CACHE = "drz-tempo-v6";
+const CACHE = "drz-tempo-v7";
 const ASSETS = [
   "./",
   "./index.html",

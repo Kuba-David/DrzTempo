@@ -2,7 +2,7 @@
 <html lang="cs" data-theme="dark">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
 <meta name="description" content="Kalendář docházky do gymu. Žádný výkon, žádný gains — jediná otázka: dokopal ses tam?" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -189,10 +189,11 @@
   .foot{margin:12px -18px 0;padding:12px 18px 16px;border-top:1px solid var(--line);font-size:12px;color:var(--muted);line-height:1.5;}
   .foot b{color:var(--text);font-weight:600;}
 
-  .field{background:var(--field);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:9px 10px;font-family:inherit;font-size:14px;width:100%;}
+  /* 16px minimum — menší písmo ve formulářovém poli spouští na iOS auto-zoom při fokusu */
+  .field{background:var(--field);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:9px 10px;font-family:inherit;font-size:16px;width:100%;}
   .field:focus{outline:none;border-color:var(--accent-deep);}
   .field::placeholder{color:color-mix(in srgb, var(--muted) 75%, transparent);}
-  .sub-input{margin-bottom:14px;font-size:12px;}
+  .sub-input{margin-bottom:14px;}
   .edit-move{background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px;}
   .edit-top{display:flex;gap:8px;}
   .name-wrap{position:relative;flex:1;min-width:0;}
@@ -289,6 +290,9 @@
       <input type="file" id="importFile" accept="application/json,.json" hidden />
     </div>
   </div>
+
+  <!-- skrytý přepínač: kliknutí na něj vyvolá na iOS 17.4+ systémovou haptiku (vibrační API tam chybí) -->
+  <label style="position:fixed;left:-9999px;top:0" aria-hidden="true"><input type="checkbox" switch id="hapticSw" tabindex="-1"></label>
 
   <div class="modal" id="noteModal" hidden role="dialog" aria-modal="true" aria-labelledby="noteTitle">
     <div class="modal-card">
@@ -399,6 +403,7 @@
   const startOfToday=()=>{const t=new Date();t.setHours(0,0,0,0);return t;};
   const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x;};
   const sameDay=(a,b)=>a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();
+  const haptic=()=>{ if(navigator.vibrate){ navigator.vibrate(12); return; } const s=$("hapticSw"); if(s){ try{ s.click(); }catch(e){} } };
 
   function h(tag,attrs){
     const e=document.createElement(tag); attrs=attrs||{};
@@ -554,7 +559,7 @@
       let lpTimer=null, lpFired=false, ptrType="mouse";
       const lpCancel=()=>{ if(lpTimer){ clearTimeout(lpTimer); lpTimer=null; } };
       btn.addEventListener("pointerdown",e=>{ ptrType=e.pointerType||"mouse"; lpFired=false; lpCancel();
-        lpTimer=setTimeout(()=>{ lpFired=true; if(navigator.vibrate) navigator.vibrate(12); },500); });
+        lpTimer=setTimeout(()=>{ lpFired=true; haptic(); },500); });
       btn.addEventListener("pointerup",()=>{ lpCancel(); if(lpFired) openNote(k); });
       btn.addEventListener("pointerleave",lpCancel);
       btn.addEventListener("pointercancel",()=>{ lpCancel(); lpFired=false; });
