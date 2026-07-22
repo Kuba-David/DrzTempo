@@ -33,26 +33,26 @@
     --today:#C46B86;
     --shadow:0 16px 34px -20px rgba(70,50,40,.30);
   }
-  [data-theme="red"]{
-    --bg:#FBEEEC; --glow:#FFF7F5; --panel:#FFFFFF; --panel-2:#FDF3F1; --field:#FBEAE7; --line:#F1DAD5;
-    --text:#4A2E2C; --muted:#AC8B86;
-    --accent:#E8927C; --accent-bright:#F3B4A3; --accent-deep:#C96A54; --on-accent:#57231A;
-    --today:#C15370;
-    --shadow:0 16px 34px -20px rgba(120,60,50,.26);
+  [data-theme="wine"]{
+    --bg:#241017; --glow:#371722; --panel:#31151F; --panel-2:#2A1119; --field:#1F0C13; --line:#4C2433;
+    --text:#F4E9E3; --muted:#C29BA6;
+    --accent:#E0A45C; --accent-bright:#F2C787; --accent-deep:#A6742E; --on-accent:#3A2410;
+    --today:#E289A2;
+    --shadow:0 18px 40px -18px rgba(0,0,0,.75);
   }
-  [data-theme="yellow"]{
-    --bg:#FBF6E6; --glow:#FFFDF3; --panel:#FFFFFF; --panel-2:#FCF8EA; --field:#F8F1DD; --line:#EEE3C5;
-    --text:#463F28; --muted:#A89B78;
-    --accent:#E6B84E; --accent-bright:#F3D477; --accent-deep:#B98F2C; --on-accent:#4A3712;
-    --today:#CC784C;
-    --shadow:0 16px 34px -20px rgba(120,95,40,.24);
+  [data-theme="coal"]{
+    --bg:#17191C; --glow:#25282D; --panel:#202329; --panel-2:#1B1E23; --field:#131518; --line:#343941;
+    --text:#ECEDEE; --muted:#9CA3AD;
+    --accent:#E0B554; --accent-bright:#F0D084; --accent-deep:#A5822F; --on-accent:#33280E;
+    --today:#DE8FA5;
+    --shadow:0 18px 40px -18px rgba(0,0,0,.75);
   }
-  [data-theme="blue"]{
-    --bg:#EBF1F8; --glow:#F7FBFF; --panel:#FFFFFF; --panel-2:#F1F6FC; --field:#E7EFF8; --line:#D6E1EE;
-    --text:#26313F; --muted:#7E8B9C;
-    --accent:#7BA7D9; --accent-bright:#A9C8E9; --accent-deep:#4E7CB0; --on-accent:#17293D;
-    --today:#E0876A;
-    --shadow:0 16px 34px -20px rgba(40,70,110,.24);
+  [data-theme="navy"]{
+    --bg:#0F1A2B; --glow:#1B2B45; --panel:#16253C; --panel-2:#111E31; --field:#0C1524; --line:#2A3E5E;
+    --text:#E9EEF6; --muted:#96A6C0;
+    --accent:#E7BC62; --accent-bright:#F4D68E; --accent-deep:#AB8534; --on-accent:#33280E;
+    --today:#E08FA9;
+    --shadow:0 18px 40px -18px rgba(0,0,0,.75);
   }
 
   *{box-sizing:border-box;}
@@ -71,11 +71,12 @@
   .gear{
     position:absolute; top:calc(14px + env(safe-area-inset-top)); right:14px; z-index:40;
     width:42px;height:42px;border-radius:50%;cursor:pointer;padding:0;
-    background:conic-gradient(from 210deg, #E4B75A, #E8927C, #E6B84E, #7BA7D9, #B98A2E, #E4B75A);
-    border:3px solid var(--panel); box-shadow:var(--shadow), 0 0 0 1px var(--line);
-    transition:transform .15s;
+    display:grid;place-items:center;
+    background:transparent;border:none;color:var(--muted);
+    transition:transform .15s,color .15s;
   }
-  .gear:hover{transform:rotate(20deg) scale(1.05);}
+  .gear svg{display:block;}
+  .gear:hover{transform:rotate(20deg);color:var(--accent);}
   .gear:focus-visible{outline:2px solid var(--accent);outline-offset:3px;}
   .theme-pop{
     position:absolute; top:calc(64px + env(safe-area-inset-top)); right:14px; z-index:39;
@@ -132,7 +133,9 @@
   .dow span.beat{color:var(--accent);font-weight:600;}
 
   .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
-  .day{position:relative;aspect-ratio:1/1;border-radius:12px;border:1px solid transparent;background:transparent;color:var(--text);font-size:14px;font-weight:500;cursor:pointer;display:grid;place-items:center;transition:transform .12s,background .15s,border-color .15s;-webkit-tap-highlight-color:transparent;}
+  .day{position:relative;aspect-ratio:1/1;border-radius:12px;border:1px solid transparent;background:transparent;color:var(--text);font-size:14px;font-weight:500;cursor:pointer;display:grid;place-items:center;transition:transform .12s,background .15s,border-color .15s;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:manipulation;}
+  .day .nd{position:absolute;bottom:4px;left:50%;transform:translateX(-50%);width:4.5px;height:4.5px;border-radius:50%;background:var(--accent-deep);z-index:3;}
+  .day.done .nd{background:var(--on-accent);}
   .day.pad{cursor:default;opacity:0;pointer-events:none;}
   .day.out{color:var(--muted);opacity:.4;}
   .day .n{position:relative;z-index:2;}
@@ -209,6 +212,23 @@
   .add-move{width:100%;border:1px dashed var(--accent-deep);background:color-mix(in srgb, var(--accent) 6%, transparent);color:var(--accent);border-radius:12px;padding:13px;font-size:13px;font-weight:600;cursor:pointer;font-family:"Space Grotesk",sans-serif;margin:2px 0 4px;}
   .add-move:hover{background:color-mix(in srgb, var(--accent) 13%, transparent);}
 
+  /* ===== deník ===== */
+  .jrow{display:block;width:100%;text-align:left;background:transparent;border:none;border-top:1px solid var(--line);padding:11px 0;cursor:pointer;color:var(--text);font-family:"Space Grotesk",sans-serif;}
+  .jrow:hover .jd{color:var(--accent);}
+  .jrow:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:8px;}
+  .jd{font-size:12px;font-weight:600;color:var(--accent-deep);display:flex;align-items:center;gap:7px;letter-spacing:.03em;}
+  .jd .att{width:8px;height:8px;border-radius:50%;background:radial-gradient(circle at 35% 30%, var(--accent-bright), var(--accent-deep));flex:none;}
+  .jt{font-size:13px;opacity:.92;margin-top:3px;line-height:1.45;white-space:pre-wrap;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;}
+
+  /* ===== modal poznámky ===== */
+  .modal{position:fixed;inset:0;z-index:60;display:grid;place-items:center;background:rgba(0,0,0,.55);padding:20px;}
+  .modal[hidden]{display:none;}
+  .modal-card{width:100%;max-width:420px;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:var(--shadow);}
+  .modal-title{font-family:"Bodoni Moda",serif;font-size:19px;}
+  .modal-sub{font-size:11.5px;color:var(--muted);margin-top:2px;}
+  .note-ta{margin-top:12px;min-height:110px;resize:vertical;line-height:1.5;}
+  .modal-actions{display:flex;justify-content:space-between;gap:8px;margin-top:12px;}
+
   .tools{display:flex;justify-content:center;align-items:center;gap:10px;margin:22px auto 0;flex-wrap:wrap;}
   .tool{background:none;border:none;color:var(--muted);font-size:11.5px;letter-spacing:.05em;cursor:pointer;opacity:.65;font-family:"Space Grotesk",sans-serif;padding:4px 2px;}
   .tool:hover{opacity:1;color:var(--accent);}
@@ -221,7 +241,7 @@
 </style>
 </head>
 <body>
-  <button class="gear" id="gear" aria-label="Nastavení tématu" aria-haspopup="true" aria-expanded="false"></button>
+  <button class="gear" id="gear" aria-label="Nastavení" aria-haspopup="true" aria-expanded="false"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
   <div class="theme-pop" id="themePop" hidden role="menu" aria-label="Barevné téma"></div>
 
   <div class="wrap">
@@ -257,6 +277,8 @@
 
     <section class="plan" id="plan"></section>
 
+    <section class="plan" id="journal" aria-label="Deník poznámek"></section>
+
     <div class="tools">
       <button class="tool" id="exportBtn">zálohovat data</button>
       <span class="tool-sep" aria-hidden="true">·</span>
@@ -264,6 +286,18 @@
       <span class="tool-sep" aria-hidden="true">·</span>
       <button class="tool danger" id="reset">vymazat razítka</button>
       <input type="file" id="importFile" accept="application/json,.json" hidden />
+    </div>
+  </div>
+
+  <div class="modal" id="noteModal" hidden role="dialog" aria-modal="true" aria-labelledby="noteTitle">
+    <div class="modal-card">
+      <div class="modal-title" id="noteTitle">—</div>
+      <div class="modal-sub">Poznámka k tréninku — váhy, pocity, co šlo a co ne.</div>
+      <textarea class="field note-ta" id="noteText" placeholder="Např. „Dnes se cvičilo dobře, dřepy s 12 kg.“"></textarea>
+      <div class="modal-actions">
+        <button class="del" id="noteDel">Smazat</button>
+        <button class="edit-btn done-btn" id="noteSave">Uložit</button>
+      </div>
     </div>
   </div>
 
@@ -276,14 +310,14 @@
     get(k){ try{ return localStorage.getItem(k); }catch(e){ return (k in mem)?mem[k]:null; } },
     set(k,v){ try{ localStorage.setItem(k,v); }catch(e){ mem[k]=v; } }
   };
-  const K_ATT="tempo:attended:v1", K_MOVES="tempo:moves:v1", K_SUB="tempo:sub:v1", K_THEME="tempo:theme:v1", K_PLANS="tempo:plans:v2", K_SCHED="tempo:sched:v1", K_BYDAY="tempo:plansByDay:v3", K_SCHED_H="tempo:schedHist:v1";
+  const K_ATT="tempo:attended:v1", K_MOVES="tempo:moves:v1", K_SUB="tempo:sub:v1", K_THEME="tempo:theme:v1", K_PLANS="tempo:plans:v2", K_SCHED="tempo:sched:v1", K_BYDAY="tempo:plansByDay:v3", K_SCHED_H="tempo:schedHist:v1", K_NOTES="tempo:notes:v1";
 
   const THEMES=[
-    {id:"dark",   name:"Parket (tmavé)", bg:"#1B1220", accent:"#E4B75A"},
-    {id:"light",  name:"Sál (světlé)",   bg:"#F6F1E9", accent:"#B98A2E"},
-    {id:"red",    name:"Pastelová červená", bg:"#FBEEEC", accent:"#E8927C"},
-    {id:"yellow", name:"Pastelová žlutá",   bg:"#FBF6E6", accent:"#E6B84E"},
-    {id:"blue",   name:"Pastelová modrá",   bg:"#EBF1F8", accent:"#7BA7D9"}
+    {id:"dark",  name:"Parket (tmavé)", bg:"#1B1220", accent:"#E4B75A"},
+    {id:"light", name:"Sál (světlé)",   bg:"#F6F1E9", accent:"#B98A2E"},
+    {id:"wine",  name:"Vínová",         bg:"#241017", accent:"#E0A45C"},
+    {id:"coal",  name:"Antracit",       bg:"#17191C", accent:"#E0B554"},
+    {id:"navy",  name:"Námořní",        bg:"#0F1A2B", accent:"#E7BC62"}
   ];
 
   const DEFAULT_MOVES=[
@@ -349,7 +383,7 @@
   /* days = aktuální tréninkové dny (hodnoty getDay), byDay = plán pro každý den.
      schedHist = historie rozvrhu: [{from:"YYYY-MM-DD", days:[…]}]; každý den v minulosti
      se hodnotí podle rozvrhu platného v ten den, takže změna dnů nerozbije starý streak. */
-  let attended=new Set(), days=[0,2,4], byDay={}, schedHist=[], planIx=0, theme="dark", editing=false;
+  let attended=new Set(), days=[0,2,4], byDay={}, schedHist=[], notes={}, planIx=0, theme="dark", editing=false;
   let view=new Date(); view.setDate(1);
 
   const $=id=>document.getElementById(id);
@@ -386,6 +420,7 @@
 
   function load(){
     try{ const a=store.get(K_ATT); if(a) attended=new Set(JSON.parse(a)); }catch(e){}
+    try{ const n=store.get(K_NOTES); if(n){ const o=JSON.parse(n); if(o&&typeof o==="object"&&!Array.isArray(o)){ notes={}; for(const k in o){ if(typeof o[k]==="string"&&o[k]) notes[k]=o[k]; } } } }catch(e){}
     /* tréninkové dny: historie změn; migrace ze staršího jednoduchého seznamu */
     let hist=null; try{ const s=store.get(K_SCHED_H); if(s) hist=JSON.parse(s); }catch(e){}
     if(Array.isArray(hist)) schedHist=hist.map(normEntry).filter(Boolean);
@@ -417,6 +452,7 @@
     for(let i=0;i<7;i++){ const ix=planIxFor(addDays(today,i)); if(ix>-1){ planIx=ix; break; } }
   }
   const saveAtt =()=>store.set(K_ATT, JSON.stringify([...attended]));
+  const saveNotes=()=>store.set(K_NOTES, JSON.stringify(notes));
   const saveSched=()=>store.set(K_SCHED_H, JSON.stringify(schedHist));
   const savePlans=()=>store.set(K_BYDAY, JSON.stringify(byDay));
   const saveTheme=()=>store.set(K_THEME, theme);
@@ -483,7 +519,7 @@
     saveSched(); savePlans(); renderAll();
   }
   function renderEyebrow(){ $("eyebrow").textContent="Madeira · "+days.map(d=>DAY_NAMES[d]).join(" · "); }
-  function renderAll(){ renderEyebrow(); renderDow(); renderCal(); renderPlan(); renderThemeOpts(); }
+  function renderAll(){ renderEyebrow(); renderDow(); renderCal(); renderPlan(); renderJournal(); renderThemeOpts(); }
   function openPop(){ $("themePop").hidden=false; $("gear").setAttribute("aria-expanded","true"); }
   function closePop(){ $("themePop").hidden=true; $("gear").setAttribute("aria-expanded","false"); }
 
@@ -503,17 +539,25 @@
     for(let i=0;i<offset;i++){ const c=document.createElement("div"); c.className="day pad"; grid.appendChild(c); }
     for(let day=1;day<=dim;day++){
       const d=new Date(y,m,day), k=keyOf(d);
-      const btn=document.createElement("button"); btn.className="day"; btn.innerHTML=`<span class="n">${day}</span>`;
+      const btn=document.createElement("button"); btn.className="day";
+      btn.innerHTML=`<span class="n">${day}</span>${notes[k]?'<i class="nd"></i>':''}`;
       const done=attended.has(k), sched=isScheduled(d);
       if(done){ btn.classList.add("done"); if(!sched) btn.classList.add("bonus"); } else if(sched){ btn.classList.add("sched"); }
       if(sameDay(d,today)) btn.classList.add("today");
       if(d>today&&!done){ btn.classList.add("out"); btn.disabled=true; }
       btn.setAttribute("aria-pressed",done?"true":"false");
-      btn.setAttribute("aria-label",`${day}. ${MONTHS_GEN[m]} ${y}${done?" – orazítkováno":""}`);
+      btn.setAttribute("aria-label",`${day}. ${MONTHS_GEN[m]} ${y}${done?" – orazítkováno":""}${notes[k]?" – s poznámkou":""}`);
+      /* klik = razítko; dlouhé podržení (nebo pravé tlačítko) = poznámka ke dni */
+      let lpTimer=null, lpFired=false;
+      const lpCancel=()=>{ if(lpTimer){ clearTimeout(lpTimer); lpTimer=null; } };
+      btn.addEventListener("pointerdown",()=>{ lpFired=false; lpCancel(); lpTimer=setTimeout(()=>{ lpFired=true; openNote(k); },500); });
+      btn.addEventListener("pointerup",lpCancel); btn.addEventListener("pointerleave",lpCancel); btn.addEventListener("pointercancel",lpCancel);
+      btn.addEventListener("contextmenu",ev=>{ ev.preventDefault(); if(!lpFired) openNote(k); });
       btn.addEventListener("click",()=>{
+        if(lpFired){ lpFired=false; return; }
         if(attended.has(k)){ attended.delete(k); }
         else{ attended.add(k); btn.classList.add("pop"); setTimeout(()=>btn.classList.remove("pop"),360); }
-        saveAtt(); renderCal();
+        saveAtt(); renderCal(); renderJournal();
       });
       grid.appendChild(btn);
     }
@@ -596,15 +640,61 @@
     }}));
   }
 
+  /* ===== deník ===== */
+  const pluralN=(n,a,b,c)=>n===1?a:(n>=2&&n<=4?b:c);
+  const noteDateLbl=k=>{ const [y,m,dd]=k.split("-").map(Number); const dt=new Date(y,m-1,dd);
+    return `${DAY_NAMES[dt.getDay()]} ${dd}. ${MONTHS_GEN[m-1]}${y!==(new Date()).getFullYear()?" "+y:""}`; };
+
+  function renderJournal(){
+    const j=$("journal"); j.innerHTML="";
+    const keys=Object.keys(notes).sort().reverse();
+    j.appendChild(h("div",{class:"plan-head"},
+      h("div",{}, h("h2",{text:"Deník"}),
+        h("p",{class:"sub",text:keys.length?`${keys.length} ${pluralN(keys.length,"poznámka","poznámky","poznámek")}`:"Postřehy z tréninků — váhy, pocity, pokroky. Otevřeš i podržením dne v kalendáři."})),
+      h("button",{class:"edit-btn",text:"+ Dnešek",onClick:()=>openNote(keyOf(new Date()))})
+    ));
+    keys.forEach(k=>{
+      j.appendChild(h("button",{class:"jrow",onClick:()=>openNote(k)},
+        h("div",{class:"jd"}, attended.has(k)?h("span",{class:"att","aria-label":"orazítkováno"}):null, noteDateLbl(k)),
+        h("div",{class:"jt",text:notes[k]})
+      ));
+    });
+  }
+
+  let noteKey=null;
+  function openNote(k){
+    noteKey=k;
+    $("noteTitle").textContent=noteDateLbl(k);
+    $("noteText").value=notes[k]||"";
+    $("noteModal").hidden=false;
+    $("noteText").focus();
+  }
+  function closeNote(){
+    if(noteKey){
+      const v=$("noteText").value.trim();
+      if(v) notes[noteKey]=v; else delete notes[noteKey];
+      saveNotes(); noteKey=null;
+    }
+    $("noteModal").hidden=true;
+    renderCal(); renderJournal();
+  }
+  $("noteSave").addEventListener("click",closeNote);
+  $("noteDel").addEventListener("click",()=>{ $("noteText").value=""; closeNote(); });
+  /* zavřít klikem na pozadí — ale jen když tam klik i začal (jinak by modal
+     zavřelo už samotné puštění prstu po dlouhém podržení dne v kalendáři) */
+  let backdropDown=false;
+  $("noteModal").addEventListener("pointerdown",e=>{ backdropDown=(e.target===$("noteModal")); });
+  $("noteModal").addEventListener("click",e=>{ if(e.target===$("noteModal")&&backdropDown){ backdropDown=false; closeNote(); } });
+
   /* ===== controls ===== */
   $("prev").addEventListener("click",()=>{view.setMonth(view.getMonth()-1);renderCal();});
   $("next").addEventListener("click",()=>{view.setMonth(view.getMonth()+1);renderCal();});
   $("jump").addEventListener("click",()=>{view=new Date();view.setDate(1);renderCal();});
-  $("reset").addEventListener("click",()=>{ if(confirm("Vymazat všechna razítka? Cviky i téma zůstanou. Tohle se nedá vrátit.")){ attended=new Set(); saveAtt(); renderCal(); } });
+  $("reset").addEventListener("click",()=>{ if(confirm("Vymazat všechna razítka? Cviky, poznámky i téma zůstanou. Tohle se nedá vrátit.")){ attended=new Set(); saveAtt(); renderCal(); renderJournal(); } });
 
   /* ===== backup ===== */
   $("exportBtn").addEventListener("click",()=>{
-    const data={app:"drz-tempo",version:4,exported:new Date().toISOString(),attended:[...attended],schedHist,plans:byDay,theme};
+    const data={app:"drz-tempo",version:5,exported:new Date().toISOString(),attended:[...attended],schedHist,plans:byDay,notes,theme};
     const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
     const a=document.createElement("a");
     a.href=URL.createObjectURL(blob);
@@ -622,6 +712,7 @@
         if(!d||d.app!=="drz-tempo"||!Array.isArray(d.attended)) throw new Error("bad backup");
         if(!confirm("Nahradit aktuální data touto zálohou?")) return;
         attended=new Set(d.attended.filter(x=>typeof x==="string"));
+        if(d.notes&&typeof d.notes==="object"&&!Array.isArray(d.notes)){ notes={}; for(const k in d.notes){ if(typeof d.notes[k]==="string"&&d.notes[k]) notes[k]=d.notes[k]; } saveNotes(); } /* v5 */
         if(Array.isArray(d.schedHist)){ const hs=d.schedHist.map(normEntry).filter(Boolean); if(hs.length){ hs.sort((a,b)=>a.from<b.from?-1:1); schedHist=hs; } } /* v4 */
         else if(Array.isArray(d.days)&&d.days.length){ const nd=normDays(d.days); if(nd) schedHist=[{from:"2000-01-01",days:nd}]; } /* v3 */
         if(d.plans&&typeof d.plans==="object"&&!Array.isArray(d.plans)){ byDay={}; for(const k in d.plans) byDay[k]=normPlan(d.plans[k]); } /* v3+v4 */
@@ -641,7 +732,7 @@
   $("gear").addEventListener("click",e=>{ e.stopPropagation(); const pop=$("themePop"); pop.hidden?openPop():closePop(); });
   $("themePop").addEventListener("click",e=>e.stopPropagation());
   document.addEventListener("click",()=>closePop());
-  document.addEventListener("keydown",e=>{ if(e.key==="Escape") closePop(); });
+  document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ if(!$("noteModal").hidden) closeNote(); else closePop(); } });
 
   /* ===== init ===== */
   load(); applyTheme(theme); renderAll();
